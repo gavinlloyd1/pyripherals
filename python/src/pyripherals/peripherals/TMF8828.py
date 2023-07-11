@@ -4,7 +4,7 @@ from .I2CController import I2CController
 import time
 
 
-class TMF8801(I2CController):
+class TMF8828(I2CController):
     """Class for the Time-of-flight I2C device
 
     Subclass of the I2CController class. Attributes and methods below are
