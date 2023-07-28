@@ -117,7 +117,7 @@ class I2CController:
 
         print('Timeout error in transmit')
 
-    def i2c_receive(self, data_length, data_transfer='wire'):
+    def i2c_receive(self, data_length, data_transfer='wire', reset_pipe=True, readout=True):
         """Take in data from the SCL and SDA lines.
             
             Parameters
@@ -125,7 +125,11 @@ class I2CController:
             data_length : int
                 Number of bytes expected to receive.
             data_transfer : str
-                The form of the data transfer. Either 'wire' and 'pipe'. Defaults to 'wire'.
+                The form of the data transfer. Either 'wire', 'pipe'. Defaults to 'wire'.
+            reset_pipe : bool
+                Whether data in the pipe is reset before receive
+            readout : bool
+                Whether pipe read empties the FIFO or buffers
 
             Returns
             -------
@@ -133,8 +137,7 @@ class I2CController:
                 The data or a bytearray and error code, depending on whether data_transfer was 'wire' or 'pipe'.
             """
 
-
-        if data_transfer.lower() == 'pipe':
+        if data_transfer.lower() == 'pipe' and reset_pipe:
             try:
                 self.endpoints['FIFO_RESET']
                 self.endpoints['PIPE_OUT']
@@ -186,7 +189,7 @@ class I2CController:
                         self.fpga.xem.ActivateTriggerIn(
                             self.endpoints['MEMREAD'].address, self.endpoints['MEMREAD'].bit_index_low)
                     return data
-                if data_transfer.lower() == 'pipe':
+                if data_transfer.lower() == 'pipe' and readout:
                     return self.fpga.read_pipe_out(self.endpoints['PIPE_OUT'].address, data_length)
             time.sleep(0.01)
 
@@ -213,7 +216,7 @@ class I2CController:
 
     # Sequence is
     # [START] DEV_ADDR(W) REG_ADDR [START] DEV_ADDR(R) VALUE
-    def i2c_read_long(self, devAddr, regAddr, data_length, data_transfer='wire'):
+    def i2c_read_long(self, devAddr, regAddr, data_length, data_transfer='wire', reset_pipe=True, readout=True):
         """Read data_length bytes from regAddr on devAddr.
 
         Parameters
@@ -226,7 +229,10 @@ class I2CController:
             Number of bytes expected to receive
         data_transfer : str
             The form of the data transfer. Either 'wire' and 'pipe'. Defaults to 'wire'.
-
+        reset_pipe : bool
+            Whether data in the pipe is reset before receive
+        readout : bool
+            Whether pipe read empties the FIFO or buffers
         Returns
         -------
         data or buf, e : list or bytearray, int
@@ -244,7 +250,7 @@ class I2CController:
             # signature: i2c_configure(data_length, starts (a one for each byte that gets a start), stops, preamble):
             start_positions = 0x01 << len(regAddr)
             self.i2c_configure(len(preamble), start_positions, 0x00, preamble)
-        data = self.i2c_receive(data_length, data_transfer)
+        data = self.i2c_receive(data_length, data_transfer, reset_pipe, readout)
 
         return data
 
