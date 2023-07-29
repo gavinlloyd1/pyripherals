@@ -174,6 +174,8 @@ class I2CController:
 
             if self.fpga.xem.IsTriggered(self.endpoints['DONE'].address,
                                          (1 << self.endpoints['DONE'].bit_index_low)):
+                if not readout:
+                    return
                 if data_transfer.lower() == 'wire':
                     # Read data: Reset the memory pointer
                     self.fpga.xem.ActivateTriggerIn(
@@ -189,7 +191,7 @@ class I2CController:
                         self.fpga.xem.ActivateTriggerIn(
                             self.endpoints['MEMREAD'].address, self.endpoints['MEMREAD'].bit_index_low)
                     return data
-                if data_transfer.lower() == 'pipe' and readout:
+                if data_transfer.lower() == 'pipe':
                     return self.fpga.read_pipe_out(self.endpoints['PIPE_OUT'].address, data_length)
             time.sleep(0.01)
 
@@ -250,9 +252,11 @@ class I2CController:
             # signature: i2c_configure(data_length, starts (a one for each byte that gets a start), stops, preamble):
             start_positions = 0x01 << len(regAddr)
             self.i2c_configure(len(preamble), start_positions, 0x00, preamble)
-        data = self.i2c_receive(data_length, data_transfer, reset_pipe, readout)
-
-        return data
+        if readout:
+            data = self.i2c_receive(data_length, data_transfer, reset_pipe, readout)
+            return data
+        else:
+            self.i2c_receive(data_length, data_transfer, reset_pipe, readout)
 
     def reset_device(self):
         """Reset the I2C controller using an OK TriggerIn."""
