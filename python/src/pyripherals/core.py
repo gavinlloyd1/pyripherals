@@ -78,7 +78,7 @@ class Register:
         """Return a dictionary of Registers from a page in an Excel spreadsheet."""
 
         reg_dict = {}
-        sheet_data = pd.read_excel(workbook_path, sheet, na_values=['NaN', 'nan']', keep_default_na=False)
+        sheet_data = pd.read_excel(workbook_path, sheet, na_values=['NaN', 'nan'], keep_default_na=False)
         for row in range(len(sheet_data)):
             row_data = sheet_data.iloc[row]
             reg_dict[row_data['Name']] = Register(
